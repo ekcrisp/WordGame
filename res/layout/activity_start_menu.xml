@@ -23,25 +23,25 @@
         android:id="@+id/newGameButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_above="@+id/createLevelButton"
+        android:layout_above="@+id/editLevelButton"
         android:layout_centerHorizontal="true"
         android:layout_marginBottom="30dp"
         android:text="New Game" />
 
     <Button
-        android:id="@+id/createLevelButton"
+        android:id="@+id/editLevelButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_centerHorizontal="true"
         android:layout_centerVertical="true"
-        android:text="Create Level" />
+        android:text="Edit Level" />
     
     
     <Button
         android:id="@+id/settingsButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_below="@+id/createLevelButton"
+        android:layout_below="@+id/editLevelButton"
         android:layout_centerHorizontal="true"
         android:layout_marginTop="35dp"
         android:text="Settings" />

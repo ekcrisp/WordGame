@@ -29,6 +29,12 @@
              android:name="edu.bard.wordgame.CreateLevelActivity">
         </activity>
         <activity
+             android:name="edu.bard.wordgame.EditLevelsActivity">
+        </activity>
+        <activity
+             android:name="edu.bard.wordgame.EditSingleLevelActivity">
+        </activity>
+        <activity
             android:name="edu.bard.wordgame.LevelActivity">
         </activity>
         
