@@ -28,8 +28,8 @@ public class EditLevelsActivity extends Activity{
 	@Override
 	protected void onResume() {
 		super.onResume();
-		populateFromDB();
 		levelAdapter.notifyDataSetChanged();
+		populateFromDB();
 	}
 	
 	@Override
@@ -56,6 +56,7 @@ public class EditLevelsActivity extends Activity{
 					intent.putExtra("level", item.getLevelText());
 					intent.putExtra("title", item.getTitle());
 					intent.putExtra("newGamePressed", false);
+					//intent.putExtra("LevelAdapter", levelAdapter);
 					//item.addDataToIntent(intent);
 					startActivity(intent);
 
