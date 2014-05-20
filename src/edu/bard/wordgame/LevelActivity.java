@@ -1,6 +1,6 @@
 package edu.bard.wordgame;
 import java.util.Random;
-
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
 import android.graphics.Bitmap;
@@ -8,10 +8,12 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Paint.Style;
+import android.graphics.Point;
 import android.graphics.Rect;
 import android.graphics.Typeface;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.Display;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
@@ -44,22 +46,22 @@ public class LevelActivity extends Activity {
 	}
 	
 	private class LevelView extends SurfaceView implements SurfaceHolder.Callback {
-		final int LEFT_LAUNCH_ANGLE = -30;
-		final int RIGHT_LAUNCH_ANGLE = 30;
 		PanelThread _thread;
 		Paint blackPaint = new Paint();
 		Typeface gameFont = Typeface.create("Helvetica",Typeface.BOLD);
 		Paint tickPaint = new Paint();
 		Paint whitePaint = new Paint();
-		Boolean gameStarted = false;
 		String[] levelTextArray = levelText.split(" ");
 		String[] spoofTextArray = spoofText.split(" ");
+		
+		Boolean gameStarted = false;
+		boolean drawRetry = false;
+		boolean drawFail = false;
+		
 		int index = 0;
 		
 		int yOffset = 0;
 		float yOffsetVelocity = 0;
-		float yOffsetAcceleration = 0;
-		float velocityChangeRate = 0;
 		int tickSpacing = 100;
 		int vanishedTicks = 0;
 		int[] curTicks = {10,20,30,40,50,60,70,80,90,100};
@@ -73,13 +75,12 @@ public class LevelActivity extends Activity {
 		int[] vanishingPos = {0,0};
 		int[] vanishingBound = {0,0};
 		boolean leftCorrect = true;
-		boolean canCollide = false; 
 		float[] vanishingXVals;
 		float[] vanishingYVals;
 		float[] vanishingXVelocities;
 		float[] vanishingYVelocities;
 		
-		float gravity = 0.125f;
+		float gravity = 0.15f;
 		
 		float rightSpeed = 12;
 		float rightAngle = 65;
@@ -167,8 +168,8 @@ public class LevelActivity extends Activity {
 		}
 		
 		public void launch() {
+			//called when user taps correct word, advancing the game
 			updateVanish(false);
-			canCollide = false;
 			if (index!=levelTextArray.length-1) {
 				index++;
 			}
@@ -188,6 +189,7 @@ public class LevelActivity extends Activity {
 				leftPos[0] = rightPos[0];
 				leftPos[1] = rightPos[1];
 			}
+			
 			//rightSpeed = 10;
 			//rightAngle = 70;
 			rightVelocityX = (float) Math.cos(Math.toRadians(rightAngle)) * rightSpeed;
@@ -209,53 +211,77 @@ public class LevelActivity extends Activity {
 			}
 			else {
 				leftCorrect = false;
-			}
-			
-			
+			}		
 		}
 		
 		public void endGame(boolean win) {
+			/*
+			gameStarted = false;
+			
+			if (win){
+				drawRetry = true;
+			}
+			else {
+				drawFail = true;
+			}
+			*/
 			
 		}
+		
+		public void drawTimerBoxes(Canvas canvas) {
+			canvas.drawRect( 5, canvas.getHeight() - (canvas.getHeight() / 12), 20, canvas.getHeight() - (canvas.getHeight() / 12) - 15, blackPaint);
+			canvas.drawRect( 5, canvas.getHeight() - (canvas.getHeight() / 15), 20, canvas.getHeight() - (canvas.getHeight() / 15) - 15, blackPaint);
+			canvas.drawRect( 5, canvas.getHeight() - (canvas.getHeight() / 18), 20, canvas.getHeight() - (canvas.getHeight() / 20) - 15, blackPaint);
 
-		public void updatePositions(Canvas canvas) {
-			canvas.drawColor(Color.GRAY);
+		}
+
+		@SuppressLint("NewApi") public void updatePositions(Canvas canvas) {
+			canvas.drawColor(Color.LTGRAY);
 			canvas.drawRect(0, 0, 2, canvas.getHeight(), blackPaint);
+			//drawTimerBoxes(canvas);
 			int tickIndex = 9;
 			for (int i = 0; i < curTicks.length; i++) {
 				canvas.drawRect(2, i*tickSpacing + yOffset - (vanishedTicks * tickSpacing), 6, (i*tickSpacing)+2 + yOffset - (vanishedTicks * tickSpacing), blackPaint);
 				canvas.drawText(Integer.toString(curTicks[tickIndex--]), 2 + 20, (i*tickSpacing) + 10 + yOffset - (vanishedTicks * tickSpacing), tickPaint);
 			}
-			if (yOffset > vanishedTicks*tickSpacing) {
-				
+			if (yOffset > vanishedTicks*tickSpacing) {		
 				for (int i = 0; i<curTicks.length - 1; i++) {
-					curTicks[i] = curTicks[i+1];
+					curTicks[i] += 10;
 				}
-				curTicks[curTicks.length-1] = curTicks[curTicks.length - 1] + 10;
 				vanishedTicks++;
 				
 			}
 			else if (yOffset < (vanishedTicks-1)*tickSpacing) {
 				for (int i = 0; i<curTicks.length - 1; i++) {
-					curTicks[i+1] = curTicks[i];
+					curTicks[i] -= 10;
 				}
-				curTicks[0] = curTicks[0] - 10;
 				vanishedTicks--;
 				
 			}
 			
 			if (!gameStarted) {
-				Rect textBounds = new Rect();
-				blackPaint.getTextBounds("START", 0 ,  "START".length(), textBounds);
-				startPos[0] = canvas.getWidth()/2 - (textBounds.right/2);
-				startBound[0] = startPos[0] + textBounds.right;
-				startPos[1] = (canvas.getHeight() - (canvas.getHeight()/12)) + textBounds.top;
-				startBound[1] = startPos[1] - textBounds.top;
-				leftPos[0] = startPos[0];
-				rightPos[0] = startPos[0];
-				leftPos[1] = startPos[1];
-				rightPos[1] = startPos[1];
-				canvas.drawText("START", startPos[0], startBound[1], blackPaint);
+				if (drawRetry) {
+
+					canvas.drawRect((canvas.getWidth()/2) - 200, (canvas.getHeight()/2) - 100, (canvas.getWidth()/2) + 200, (canvas.getHeight()/2) + 100, new Paint(Color.BLACK));
+					resetVariables();
+				}
+				else if (drawFail) {
+					canvas.drawRect((canvas.getWidth()/2) - 200, (canvas.getHeight()/2) - 100, (canvas.getWidth()/2) + 200, (canvas.getHeight()/2) + 100, new Paint(Color.RED));
+					resetVariables();
+				}
+				else {
+					Rect textBounds = new Rect();
+					blackPaint.getTextBounds("START", 0 ,  "START".length(), textBounds);
+					startPos[0] = canvas.getWidth()/2 - (textBounds.right/2);
+					startBound[0] = startPos[0] + textBounds.right;
+					startPos[1] = (canvas.getHeight() - (canvas.getHeight()/12)) + textBounds.top;
+					startBound[1] = startPos[1] - textBounds.top;
+					leftPos[0] = startPos[0];
+					rightPos[0] = startPos[0];
+					leftPos[1] = startPos[1];
+					rightPos[1] = startPos[1];
+					canvas.drawText("START", startPos[0], startBound[1], blackPaint);
+				}
 				
 			}
 			else {
@@ -269,37 +295,49 @@ public class LevelActivity extends Activity {
 				
 				updateBounds();
 				
-				if ((leftPos[0] < 0)  || (leftBound[0] > canvas.getWidth())){
-					leftVelocityX *= -.8;
-					if (leftBound[0] > rightPos[0]) {
-						int difference = leftBound[0] - rightPos[0];
-						rightPos[0]+=difference;
-						rightBound[0]+=difference;
-					}
-					else {
-						canCollide = true;
+				if (leftPos[0] < 6){
+					if (leftVelocityX < 0)
+						leftVelocityX *= -.8;
+				}
+				else if (leftBound[0] > canvas.getWidth() - 3) {
+					if (leftVelocityX > 0) {
+						leftVelocityX *= -.8;
 					}
 				}
-
-				if ((rightBound[0] < 0) || (rightBound[0] > canvas.getWidth()) ) {
-					rightVelocityX *= -.8;
-					if (leftBound[0] > rightPos[0]) {
-						int difference = leftBound[0] - rightPos[0];
-						rightPos[0]+=difference;
-						rightBound[0]+=difference;
-					}
-					else {
-						canCollide = true;
+				if (rightPos[0] < 6) {
+					if (rightVelocityX < 0)
+						rightVelocityX *= -.8;
+				}
+				else if (rightBound[0] > canvas.getWidth() - 3) {
+					if (rightVelocityX > 0) {
+						rightVelocityX *= -.8;
 					}
 				}
-				if (canCollide) {
-					if (leftBound[0] > rightPos[0]) {
+				
+				if (leftBound[0] > rightPos[0]) {
+					int difference = leftBound[0] - rightPos[0];
+					if (rightBound[0] + difference + 15 < canvas.getWidth()) {
+						rightPos[0]+=difference + 15;
+						rightBound[0]+=difference + 15;
+					}
+					else if (leftPos[0] - difference - 15 > 0){
+						leftPos[0] -= difference - 15;
+						leftBound[0] -= difference - 15;
+					}
+					else {
+						rightPos[0]+=difference/2 + 15;
+						rightBound[0]+=difference/2 + 15;
+						leftPos[0] -= difference/2 - 15;
+						leftBound[0] -= difference/2 - 15;
+					}
+					if (leftVelocityX > 0 ) {
 						leftVelocityX *= -1;
+					}
+					if (rightVelocityX < 0 ) {
 						rightVelocityX *= -1;
 					}
-					
 				}
-
+				
 				if (leftCorrect) {
 					canvas.drawText(levelTextArray[index], leftPos[0], leftBound[1] + yOffset, blackPaint);
 					canvas.drawText(spoofTextArray[index], rightPos[0], rightBound[1] + yOffset, blackPaint);
@@ -316,33 +354,57 @@ public class LevelActivity extends Activity {
 					vanishingYVelocities[i] += gravity;
 				}
 				if (leftPos[1] + yOffset < canvas.getHeight() / 6) {
-					yOffsetVelocity = (float) (leftVelocityY+0.5);
-				}
-				else if  (leftPos[1] + yOffset > canvas.getHeight() - (canvas.getHeight() / 8)) {
-					yOffsetVelocity = (float) (leftVelocityY-0.5);
-				}
-				else if (leftPos[1] + yOffset < canvas.getHeight() / 4) {
-					yOffsetVelocity = (float) (leftVelocityY * .99);
+					if (leftVelocityY > 0) {
+						yOffsetVelocity = (float) (leftVelocityY+0.05);
+					}
+					else {
+						yOffsetVelocity = (float) (leftVelocityY*.8);
+					}
 				}
 				else if  (leftPos[1] + yOffset > canvas.getHeight() - (canvas.getHeight() / 6)) {
-					yOffsetVelocity = (float) (leftVelocityY * 0.99);
+					
+					if (leftVelocityY > 0) {
+						yOffsetVelocity = (float) (leftVelocityY*0.8);
+					}
+					else {
+						yOffsetVelocity = (float) (leftVelocityY-0.5);
+					}
 				}
-				else if (leftPos[1] + yOffset < canvas.getHeight() / 3) {
-					yOffsetVelocity = (float) (leftVelocityY * 0.95);
+				else if (leftPos[1] + yOffset < canvas.getHeight() / 4) {
+					if (leftVelocityY > 0) {
+						yOffsetVelocity = (float) (leftVelocityY * 0.97);
+					}
+					else {
+						yOffsetVelocity = (float) (leftVelocityY*.85);
+					}
+					
 				}
 				else if  (leftPos[1] + yOffset > canvas.getHeight() - (canvas.getHeight() / 5)) {
-					yOffsetVelocity = (float) (leftVelocityY * 0.95);
+					yOffsetVelocity = (float) (leftVelocityY * 0.975);
 				}
-				else if (leftPos[1] + yOffset < canvas.getHeight() / 2) {
-					yOffsetVelocity = (float) (leftVelocityY * 0.9);
+				else if (leftPos[1] + yOffset < canvas.getHeight() / 3) {
+					
+					if (leftVelocityY > 0) {
+						yOffsetVelocity = (float) (leftVelocityY * 0.925);
+					}
+					else {
+						yOffsetVelocity = (float) (leftVelocityY*.9);
+					}
+					
 				}
 				else if  (leftPos[1] + yOffset > canvas.getHeight() - (canvas.getHeight() / 4)) {
-					yOffsetVelocity = (float) (leftVelocityY * 0.9);
+					yOffsetVelocity = (float) (leftVelocityY * 0.925);
+				}
+				else if (leftPos[1] + yOffset < canvas.getHeight() / 2) {
+					yOffsetVelocity = (float) (leftVelocityY * 0.85);
+				}
+				else if  (leftPos[1] + yOffset > canvas.getHeight() - (canvas.getHeight() / 3)) {
+					yOffsetVelocity = (float) (leftVelocityY * 0.85);
 				}
 				else if (leftPos[1] + yOffset < canvas.getHeight() / 1.5) {
 					yOffsetVelocity = (float) (leftVelocityY * 0.8);
 				}
-				else if  (leftPos[1] + yOffset > canvas.getHeight() - (canvas.getHeight() / 3)) {
+				else if  (leftPos[1] + yOffset > canvas.getHeight() - (canvas.getHeight() / 2)) {
 					yOffsetVelocity = (float) (leftVelocityY * 0.8);
 				}
 				else {
@@ -358,11 +420,59 @@ public class LevelActivity extends Activity {
 				 * 
 				 */
 				
-				canvas.drawText("Height: " + (yOffset - leftPos[0]), 540,1000, tickPaint);
+				canvas.drawText("Height: " + (((9*tickSpacing) - (yOffset + leftPos[1])) + curTicks[0]), 540,1000, tickPaint);
 			}
 			
 		}
 		
+		private void resetVariables() {
+			 gameStarted = false;
+			drawRetry = false;
+			drawFail = false;
+			
+			 index = 0;
+			
+			yOffset = 0;
+			yOffsetVelocity = 0;
+			tickSpacing = 100;
+			vanishedTicks = 0;
+			for (int i = 1; i<=10; i++) {
+				curTicks[i] = i*10;
+			}
+			
+			leftPos[0] = 0;
+			leftPos[1] = 0;
+			leftBound[0] = 0;
+			leftBound[1] = 0;
+			rightPos[0] = 0;
+			rightPos[1] = 0;
+			rightBound[0] = 0;
+			rightBound[1] = 0;
+			startPos[0] = 0;
+			startPos[1] = 0;
+			startBound[0] = 0;
+			startBound[1] = 0;
+			vanishingPos[0] = 0;
+			vanishingPos[1] = 0;
+			vanishingBound[0] = 0;
+			vanishingBound[1] = 0;
+			leftCorrect = true;
+			
+			gravity = 0.15f;
+			
+			 rightSpeed = 12;
+			 rightAngle = 65;
+			rightVelocityX = (float) Math.cos(Math.toRadians(rightAngle)) * rightSpeed;
+			 rightVelocityY = (float) Math.sin(Math.toRadians(rightAngle)) * rightSpeed;
+			
+			leftSpeed = 12;
+			 leftAngle = 115;
+			 leftVelocityX = (float) Math.cos(Math.toRadians(leftAngle)) * leftSpeed;
+			 leftVelocityY = (float) Math.sin(Math.toRadians(leftAngle)) * leftSpeed;
+			
+			r = new Random();
+		}
+
 		public void updateBounds() {
 			Rect textBounds = new Rect();
 			blackPaint.getTextBounds(levelTextArray[index], 0 ,  levelTextArray[index].length(), textBounds);
