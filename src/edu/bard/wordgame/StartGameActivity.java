@@ -3,6 +3,7 @@ package edu.bard.wordgame;
 import java.util.ArrayList;
 import android.app.Activity;
 import android.content.Intent;
+import android.database.Cursor;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.AdapterView;
@@ -12,6 +13,9 @@ public class StartGameActivity extends Activity {
 	
 	ArrayList<LevelItem> levels;
 	LevelAdapter levelAdapter;
+	DBAdapter dbAdapter;
+	protected Cursor m_cursor;
+	ListView myListView;
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -38,7 +42,6 @@ public class StartGameActivity extends Activity {
 					intent.putExtra("level", item.getLevelText());
 					intent.putExtra("fakeLevel", item.getFakeLevelText());
 					intent.putExtra("title", item.getTitle());
-					//item.addDataToIntent(intent);
 					startActivity(intent);
 
 				}
@@ -46,7 +49,23 @@ public class StartGameActivity extends Activity {
 			});
 		
 		myListView.setAdapter(levelAdapter);
-		
-		
+		dbAdapter = new DBAdapter(this);
+		dbAdapter.open();
+		populateFromDB();	
+	}
+	
+	private void populateFromDB(){
+		m_cursor = dbAdapter.getAllItems();
+		m_cursor.moveToFirst();
+		if(m_cursor.getCount()!=0){
+			do {
+				levels.add(new LevelItem(
+						m_cursor.getString(DBAdapter.COL_TITLE), 
+						m_cursor.getString(DBAdapter.COL_LEVELTEXT), 			
+						m_cursor.getString(DBAdapter.COL_SPOOFTEXT)));
+			}while (m_cursor.moveToNext());
+		}
+		levelAdapter.notifyDataSetChanged();
+		m_cursor.close();
 	}
 }

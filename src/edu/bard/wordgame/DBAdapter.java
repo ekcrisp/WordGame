@@ -105,6 +105,7 @@ public class DBAdapter {
 	}
 	
 	public boolean removeTask(String name) {
+		Log.i("la", name+"alsad");
 		Cursor m_cursor = query(name);
 		return m_DB.delete(DATABASE_TABLE, KEY_ID + " = ?", new String[] {Integer.toString(m_cursor.getInt(COL_ID))}) > 0;
 	}

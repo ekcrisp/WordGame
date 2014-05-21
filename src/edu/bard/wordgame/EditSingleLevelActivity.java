@@ -1,13 +1,26 @@
 package edu.bard.wordgame;
 
+import java.util.ArrayList;
+
 import android.app.Activity;
+import android.content.Intent;
+import android.database.Cursor;
+import android.database.SQLException;
 import android.os.Bundle;
+import android.util.Log;
+import android.view.View;
+import android.widget.Button;
 import android.widget.EditText;
 
 public class EditSingleLevelActivity extends Activity{
 
+	ArrayList<LevelItem> levels;
+	LevelAdapter levelAdapter;
 	private DBAdapter dbAdapter;
 	EditText titleHolder, levelHolder;
+	private String title;
+	Button deleteButton;
+	protected Cursor m_cursor;
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -17,9 +30,26 @@ public class EditSingleLevelActivity extends Activity{
 		dbAdapter.open();
 		titleHolder = (EditText) findViewById(R.id.editLevelTitle);
 		levelHolder = (EditText) findViewById(R.id.editLevelPreview);
-		
-		//if this causes problems on new level, just check boolean extra
+		deleteButton = (Button) findViewById(R.id.deleteButton);
 		Bundle extra = getIntent().getExtras();
+		title = extra.getString("title");
+		
+		deleteButton.setOnClickListener(new Button.OnClickListener() {
+
+			@Override
+			public void onClick(View view) {
+				
+				try{
+					dbAdapter.removeTask(title);
+					finish();
+				}catch (SQLException e){
+					titleHolder.setText("Cannot remove Activity!");
+				}
+			}			
+		});
+		
+
+		//if this causes problems on new level, just check boolean extra
 		if(!extra.getBoolean("newGamePressed")){
 			
 			CharSequence levelText = (CharSequence) extra.get("level");
@@ -29,14 +59,11 @@ public class EditSingleLevelActivity extends Activity{
 			levelHolder.setText(levelText);
 			
 		}
-
 	}
 	
 	@Override
-	protected void onDestroy(){
-		super.onDestroy();
-		//check for duplicates
-		
+	protected void onPause(){
+		super.onPause();
 		Bundle extra = getIntent().getExtras();
 		if(extra.getBoolean("newGamePressed") == true){
 			//TODO: make spooftext viable
@@ -56,6 +83,21 @@ public class EditSingleLevelActivity extends Activity{
 									levelHolder.getText().toString(),
 									levelHolder.getText().toString()));
 		}
+	}	
+	
+	private void populateFromDB(){
+		m_cursor = dbAdapter.getAllItems();
+		m_cursor.moveToFirst();
+		if(m_cursor.getCount()!=0){
+			do {
+				levels.add(new LevelItem(
+						m_cursor.getString(DBAdapter.COL_TITLE), 
+						m_cursor.getString(DBAdapter.COL_LEVELTEXT), 			
+						m_cursor.getString(DBAdapter.COL_SPOOFTEXT)));
+			}while (m_cursor.moveToNext());
+		}
+		levelAdapter.notifyDataSetChanged();
+		m_cursor.close();
 		
 	}
 }

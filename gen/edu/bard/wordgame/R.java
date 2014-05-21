@@ -20,19 +20,20 @@ public final class R {
         public static final int ic_launcher=0x7f020000;
     }
     public static final class id {
-        public static final int action_settings=0x7f08000c;
+        public static final int action_settings=0x7f08000d;
+        public static final int deleteButton=0x7f08000a;
         public static final int editLevelButton=0x7f080006;
         public static final int editLevelPreview=0x7f080009;
         public static final int editLevelTitle=0x7f080008;
         public static final int editTextListView=0x7f080000;
         public static final int frame=0x7f080002;
-        public static final int levelPreview=0x7f08000b;
+        public static final int levelPreview=0x7f08000c;
         public static final int levelTextView=0x7f080004;
         public static final int myListView=0x7f080003;
         public static final int newGameButton=0x7f080005;
         public static final int newLevelButton=0x7f080001;
         public static final int settingsButton=0x7f080007;
-        public static final int title=0x7f08000a;
+        public static final int title=0x7f08000b;
     }
     public static final class layout {
         public static final int activity_create_level=0x7f030000;
